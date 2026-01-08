@@ -17,4 +17,3 @@ try {
 } catch (PDOException $e) {
     die("DB error: " . $e->getMessage());
 }
-?>
