@@ -1,15 +1,13 @@
 FROM php:8.2-apache
 
-# ติดตั้ง mysqli
-RUN docker-php-ext-install mysqli
+# ติดตั้ง PDO MySQL
+RUN docker-php-ext-install pdo pdo_mysql
 
-# เปิด mod rewrite (เผื่อใช้)
+# เปิด mod_rewrite (เผื่อ redirect)
 RUN a2enmod rewrite
 
-# คัดลอกไฟล์ทั้งหมดเข้า apache
+# copy โค้ดเข้า apache
 COPY . /var/www/html/
 
-# สิทธิ์
+# ตั้ง permission
 RUN chown -R www-data:www-data /var/www/html
-
-EXPOSE 80
