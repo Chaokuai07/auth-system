@@ -11,11 +11,21 @@ if ($_SESSION["role"] !== "dev") {
     exit();
 }
 
-require "../auth/db.php";
+require __DIR__ . "/../auth/db.php";
 
-$sql = "SELECT id, brand, model, color, price, rom, battery_health FROM products ORDER BY id DESC";
-$result = $conn->query($sql);
+try {
+    $stmt = $pdo->prepare("
+        SELECT id, brand, model, color, price, rom, battery_health
+        FROM products
+        ORDER BY id DESC
+    ");
+    $stmt->execute();
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("DB error");
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -59,4 +69,5 @@ $result = $conn->query($sql);
     }
     </script>
 </body>
+
 </html>
