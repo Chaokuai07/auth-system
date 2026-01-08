@@ -1,58 +1,67 @@
 <?php
 session_start();
-require 'db.php';
+require __DIR__ . '/db.php';
 
-$error = ""; // ไว้เก็บ error เพื่อนำไปแสดงใน HTML
+$error = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    $identity = $_POST["login_identity"];
-    $password = $_POST["login_password"];
+    $identity = $_POST["login_identity"] ?? '';
+    $password = $_POST["login_password"] ?? '';
 
-    $sql = $conn->prepare("SELECT * FROM users WHERE email = ?");
-    $sql->bind_param("s", $identity);
-    $sql->execute();
-    $result = $sql->get_result();
+    try {
+        $sql = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        $sql->execute([$identity]);
+        $user = $sql->fetch(PDO::FETCH_ASSOC);
 
-    if ($result->num_rows === 1) {
+        if ($user) {
 
-        $user = $result->fetch_assoc();
+            if (password_verify($password, $user["password"])) {
 
-        if (password_verify($password, $user["password"])) {
+                // SESSION
+                $_SESSION["user_id"] = $user["id"];
+                $_SESSION["role"] = $user["role"];
+                $_SESSION["name"] = $user["first_name"];
 
-            // SESSION
-            $_SESSION["user_id"] = $user["id"];
-            $_SESSION["role"] = $user["role"];
-            $_SESSION["name"] = $user["first_name"];
+                // ⭐ REMEMBER ME ⭐
+                if (!empty($_POST["remember"])) {
 
-            // ⭐ REMEMBER ME HERE ⭐
-            if (!empty($_POST["remember"])) {
+                    $token = bin2hex(random_bytes(32));
 
-                // สร้าง token แบบสุ่ม
-                $token = bin2hex(random_bytes(32));
+                    setcookie(
+                        "remember_token",
+                        $token,
+                        time() + (86400 * 30),
+                        "/",
+                        "",
+                        false,
+                        true
+                    );
 
-                // เก็บลง cookie 30 วัน
-                setcookie("remember_token", $token, time() + (86400 * 30), "/", "", false, true);
+                    $sql2 = $pdo->prepare(
+                        "UPDATE users SET remember_token = ? WHERE id = ?"
+                    );
+                    $sql2->execute([$token, $user["id"]]);
+                }
 
-                // อัปเดต DB ให้จำ token นี้
-                $sql2 = $conn->prepare("UPDATE users SET remember_token=? WHERE id=?");
-                $sql2->bind_param("si", $token, $user["id"]);
-                $sql2->execute();
-            }
+                // REDIRECT
+                if ($user["role"] === "dev") {
+                    header("Location: ../dev/index.php");
+                } else {
+                    header("Location: ../user/index.php");
+                }
+                exit;
 
-            // REDIRECT
-            if ($user["role"] === "dev") {
-                header("Location: ../dev/index.php");
             } else {
-                header("Location: ../user/index.php");
+                $error = "Incorrect password!";
             }
-            exit();
+
         } else {
-            $error = "Incorrect password!";
+            $error = "Email not found!";
         }
 
-    } else {
-        $error = "Email not found!";
+    } catch (PDOException $e) {
+        $error = "Database error";
     }
 }
 ?>
@@ -133,4 +142,5 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <script src="../js/auth.js"></script>
     <script src="/js/include-footer.js"></script>
 </body>
+
 </html>
