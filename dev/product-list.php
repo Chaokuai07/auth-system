@@ -7,23 +7,11 @@ if (!isset($_SESSION["user_id"])) {
 }
 
 if ($_SESSION["role"] !== "dev") {
-    header("Location: ../user/index.php");
+    header("Location: ../user/index.php"); 
     exit();
 }
 
-require __DIR__ . "/../auth/db.php";
-
-try {
-    $stmt = $pdo->prepare("
-        SELECT id, brand, model, color, price, rom, battery_health
-        FROM products
-        ORDER BY id DESC
-    ");
-    $stmt->execute();
-    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    die("DB error");
-}
+require "../auth/db.php";
 ?>
 
 <!DOCTYPE html>
@@ -71,3 +59,4 @@ try {
 </body>
 
 </html>
+
