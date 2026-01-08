@@ -140,7 +140,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <div id="footer"></div>
     <script src="../js/auth.js"></script>
-    <script src="/js/include-footer.js"></script>
+    <script src="../js/include-footer.js"></script>
 </body>
 
 </html>
+
